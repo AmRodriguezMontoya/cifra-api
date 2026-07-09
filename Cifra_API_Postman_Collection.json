@@ -1,0 +1,51 @@
+{
+  "info": {
+    "_postman_id": "19a6073b-cb39-45ee-9504-aaa7c5a362fb",
+    "name": "My Collection",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56465637",
+    "_collection_link": "https://go.postman.co/collection/56465637-19a6073b-cb39-45ee-9504-aaa7c5a362fb?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Cifra API",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "facturas",
+              "type": "file",
+              "uuid": "a8a0dd57-65ee-4f6d-9100-ed11ec496103",
+              "src": [
+                "/C:/Users/esper/Downloads/sample-invoices/sample-1/2025-08-03_FLA115451_e64ed6fd1495fc84.xml",
+                "/C:/Users/esper/Downloads/sample-invoices/sample-1/2025-09-05_P12206_499c1c1fd58b39f6.xml",
+                "/C:/Users/esper/Downloads/sample-invoices/sample-1/2025-12-17_MRBA27913_bde00ee01ae83f48.xml",
+                "/C:/Users/esper/Downloads/sample-invoices/sample-1/2026-04-22_FES23029_4ea525948bd872b9.xml",
+                "/C:/Users/esper/Downloads/sample-invoices/sample-1/2025-08-04_FEAM168587_719ce8fd88c792c1.xml"
+              ]
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/invoices/calculate",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v1",
+            "invoices",
+            "calculate"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

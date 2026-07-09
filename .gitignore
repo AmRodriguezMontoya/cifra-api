@@ -1,0 +1,12 @@
+# Dependencias
+node_modules/
+
+# Código compilado (TypeScript)
+dist/
+
+# Variables de entorno
+.env
+
+# Archivos de sistema o temporales
+.DS_Store
+*.log
