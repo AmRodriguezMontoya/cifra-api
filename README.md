@@ -1,55 +1,77 @@
 # Cifra-API: Motor de Auditoría y Retenciones Tributarias 🇨🇴
-Cifra-API es un microservicio de alto rendimiento diseñado para la automatización inteligente del procesamiento de facturas electrónicas (XML) bajo la normativa vigente de la DIAN.
-El sistema no solo calcula retenciones, sino que **audita** cada documento. Aplica reglas de exclusividad fiscal (evitando la doble tributación en Régimen Simple) y entrega una trazabilidad técnica detallada de cada decisión contable tomada por el motor.
+
+Cifra-API es una solución de backend de alto rendimiento, diseñada para la automatización inteligente del procesamiento de facturas electrónicas bajo la normativa vigente de la DIAN. El sistema no solo calcula retenciones, sino que **audita** cada documento, entregando una justificación técnica detallada por cada decisión fiscal aplicada.
 
 ---
 
-## 🚀 Arquitectura 
-Este proyecto ha sido diseñado bajo principios de **Clean Architecture**, garantizando que el núcleo del negocio (dominio) sea independiente de la infraestructura:
+## 🏗️ Arquitectura Senior
 
-*   **Dominio:** Reglas tributarias puras (Strategy Pattern).
-*   **Aplicación:** Orquestación de casos de uso y lógica de exclusividad.
-*   **Infraestructura:** Parsers dinámicos y adaptadores de entrada (Express/Postman).
+Este proyecto fue construido aplicando **Clean Architecture** para separar claramente las responsabilidades, asegurar la escalabilidad y facilitar el testing:
 
----
-
-## 🛠️ Requisitos Previos
-Antes de ejecutar el proyecto, asegúrate de tener instalado:
-*   **Node.js** (v18.0.0 o superior recomendada).
-*   **npm** o **yarn**.
-*   **Postman** (para probar los endpoints de la API).
-*   **Git** (para clonar el repositorio).
+*   **Capa de Dominio (`domain/rules`):** Contiene el núcleo tributario. Se implementó el **Patrón Strategy** para el cálculo de impuestos. Esto permite agregar nuevas reglas tributarias sin modificar el código existente.
+*   **Capa de Aplicación (`use-cases`):** Orquesta el flujo de negocio (`CalculateWithholdingsUseCase`), ejecutando las estrategias y aplicando **lógica de exclusividad fiscal**. Si el sistema detecta la aplicación de **ReteIVA (15%)**, el motor bloquea automáticamente la aplicación de ReteFuente o ReteICA, garantizando el cumplimiento normativo.
+*   **Capa de Infraestructura (`infrastructure/parsers`):** Se encarga del procesamiento dinámico de XML (UBL 2.1), utilizando encadenamiento opcional para prevenir fallos ante variaciones de estructura.
 
 ---
 
-## ⚙️ Instalación y Ejecución
+## 🛠️ Stack Tecnológico
+*   **Runtime:** Node.js
+*   **Lenguaje:** TypeScript (Tipado estricto)
+*   **Testing:** Jest (Suite de pruebas unitarias)
+*   **Arquitectura:** Clean Architecture / Strategy Pattern
+*   **Procesamiento:** `xml2js` (con normalización de prefijos DIAN)
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone
-   cd cifra-api
+---
 
-   Instalar dependencias:Bashnpm install
-Ejecutar en modo desarrollo:Bashnpx tsx src/app.ts
-El servidor estará disponible en http://localhost:3000.📂 
+## 🧾 Reglas de Negocio Implementadas
 
-Estructura del ProyectoUn vistazo rápido a cómo está organizado el código para mantener la arquitectura limpia:Plaintextcifra-api/
+| Impuesto | Criterio de Aplicación | Lógica de Exclusividad |
+| :--- | :--- | :--- |
+| **ReteIVA** | Responsabilidad 'O-47' o 'R-99-PN' | Tiene prioridad absoluta. |
+| **ReteFuente** | Subtotal > $100.000 | Se omite si ya se aplicó ReteIVA. |
+| **ReteICA** | Aplicable s/ subtotal (9.66x1000) | Se omite si ya se aplicó ReteIVA. |
 
-├── src/
-│   ├── application/    # Casos de uso y orquestación
-│   ├── domain/         # Reglas de negocio y Estrategias (Estrategias de Rete)
-│   ├── infrastructure/ # Parsers XML y adaptadores externos
-│   └── app.ts          # Punto de entrada
-├── tests/              # Pruebas unitarias con Jest
-├── package.json        # Dependencias y scripts
-└── tsconfig.json       # Configuración de TypeScript
+---
+
+## 📋 Ejemplo de Respuesta (Auditoría Fiscal)
+Cuando la API procesa una factura, devuelve un objeto detallado con la auditoría realizada. Así se ve la exclusividad en acción:
+
+```json
+{
+  "archivo": "Factura_2026_001.xml",
+  "proveedor": {
+    "nit": "900419249",
+    "razon_social": "SOLUCIONES TECNOLÓGICAS SAS"
+  },
+  "totales": {
+    "total_retenciones": 28500,
+    "total_a_pagar": 1161500
+  },
+  "retenciones_aplicadas": [
+    {
+      "impuesto": "ReteIVA",
+      "valor_retenido": 28500,
+      "justificacion": "Aplica 15% sobre IVA base ($190000)."
+    }
+  ],
+  "retenciones_omitidas": [
+    {
+      "impuesto": "ReteFuente",
+      "justificacion": "Omitida por exclusividad: Ya se aplicó ReteIVA."
+    }
+  ]
+}
+
+🚀 Instalación y Ejecución
+Clonar el repositorio: git clone [url-tu-repo]
+Instalar dependencias: npm install
+Ejecutar en modo desarrollo: npx tsx src/app.ts
 
 🧪 Testing Automatizado
-Validamos la precisión contable del motor mediante pruebas unitarias. Para ejecutar la suite de pruebas:Bashnpx jest
+El proyecto cuenta con una suite de pruebas unitarias para validar la lógica contable y el comportamiento del motor bajo diversos escenarios.
+Bash
+npx jest
 
----
-
-## 👩‍💻 Sobre la Autora
-
-Este proyecto fue desarrollado por **Ana Maria Rodriguez Montoya**. 
-*¡Gracias por revisar este proyecto!*
+👩‍💻 Sobre la Autora
+Este proyecto fue desarrollado con dedicación por Ana Maria Rodriguez Montoya.
+¡Gracias por revisar este proyecto!
