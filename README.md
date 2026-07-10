@@ -32,7 +32,9 @@ Antes de ejecutar el proyecto, asegúrate de tener instalado:
    Instalar dependencias:Bashnpm install
 Ejecutar en modo desarrollo:Bashnpx tsx src/app.ts
 El servidor estará disponible en http://localhost:3000.📂 
+
 Estructura del ProyectoUn vistazo rápido a cómo está organizado el código para mantener la arquitectura limpia:Plaintextcifra-api/
+
 ├── src/
 │   ├── application/    # Casos de uso y orquestación
 │   ├── domain/         # Reglas de negocio y Estrategias (Estrategias de Rete)
