@@ -4,21 +4,19 @@ Cifra-API es una solución de backend de alto rendimiento, diseñada para la aut
 
 ---
 
-## 🏗️ Arquitectura Senior
+## 🏗️ Arquitectura 
 
-Este proyecto fue construido aplicando **Clean Architecture** para separar claramente las responsabilidades, asegurar la escalabilidad y facilitar el testing:
+Este proyecto fue construido aplicando **Clean Architecture** para asegurar la escalabilidad y facilitar el testing:
 
-*   **Capa de Dominio (`domain/rules`):** Contiene el núcleo tributario. Se implementó el **Patrón Strategy** para el cálculo de impuestos. Esto permite agregar nuevas reglas tributarias sin modificar el código existente.
-*   **Capa de Aplicación (`use-cases`):** Orquesta el flujo de negocio (`CalculateWithholdingsUseCase`), ejecutando las estrategias y aplicando **lógica de exclusividad fiscal**. Si el sistema detecta la aplicación de **ReteIVA (15%)**, el motor bloquea automáticamente la aplicación de ReteFuente o ReteICA, garantizando el cumplimiento normativo.
-*   **Capa de Infraestructura (`infrastructure/parsers`):** Se encarga del procesamiento dinámico de XML (UBL 2.1), utilizando encadenamiento opcional para prevenir fallos ante variaciones de estructura.
+*   **Dominio (`domain/rules`):** Contiene el núcleo tributario. Se implementó el **Patrón Strategy** para el cálculo de impuestos, permitiendo agregar nuevas reglas sin modificar el código central.
+*   **Aplicación (`use-cases`):** Orquesta el flujo de negocio y aplica **lógica de exclusividad fiscal**. Si el sistema detecta la aplicación de **ReteIVA (15%)**, el motor bloquea automáticamente otras retenciones.
+*   **Infraestructura (`infrastructure/parsers`):** Procesamiento dinámico de XML (UBL 2.1) con manejo seguro de nodos.
 
 ---
 
 ## 🛠️ Stack Tecnológico
-*   **Runtime:** Node.js
-*   **Lenguaje:** TypeScript (Tipado estricto)
-*   **Testing:** Jest (Suite de pruebas unitarias)
-*   **Arquitectura:** Clean Architecture / Strategy Pattern
+*   **Runtime:** Node.js | **Lenguaje:** TypeScript
+*   **Testing:** Jest | **Arquitectura:** Clean Architecture
 *   **Procesamiento:** `xml2js` (con normalización de prefijos DIAN)
 
 ---
@@ -33,16 +31,38 @@ Este proyecto fue construido aplicando **Clean Architecture** para separar clara
 
 ---
 
-## 📋 Ejemplo de Respuesta (Auditoría Fiscal)
-Cuando la API procesa una factura, devuelve un objeto detallado con la auditoría realizada. Así se ve la exclusividad en acción:
+## 📋 Requisitos Previos
+Antes de comenzar, asegúrate de tener instalado en tu entorno de desarrollo:
 
+*   **Node.js:** Versión 18.0.0 o superior ([descargar aquí](https://nodejs.org/)).
+*   **npm:** Suele instalarse automáticamente con Node.js.
+*   **Git:** Para gestionar el repositorio ([descargar aquí](https://git-scm.com/)).
+*   **Postman:** Para realizar las pruebas de los endpoints de manera sencilla.
+
+---
+
+## 🚀 Instalación y Ejecución
+
+1. **Clonar el repositorio:** `git clone https://github.com/AmRodriguezMontoya/cifra-api`
+2. **Instalar dependencias:** `npm install`
+3. **Ejecutar en modo desarrollo:** `npx tsx src/app.ts`
+
+---
+
+## 💡 Cómo usar la API
+Una vez que el servidor esté activo en `http://localhost:3000`, puedes realizar peticiones:
+
+1. Abre **Postman** y crea una petición **POST** a `http://localhost:3000/api/v1/invoices/calculate`.
+2. En la pestaña **Body**, selecciona **form-data**.
+3. Crea un campo con la clave `facturas`, cambia el tipo de "Text" a **"File"**.
+4. Selecciona tus archivos XML de facturas y haz clic en **Send**.
+
+---
+
+## 📋 Ejemplo de Respuesta (Auditoría Fiscal)
 ```json
 {
   "archivo": "Factura_2026_001.xml",
-  "proveedor": {
-    "nit": "900419249",
-    "razon_social": "SOLUCIONES TECNOLÓGICAS SAS"
-  },
   "totales": {
     "total_retenciones": 28500,
     "total_a_pagar": 1161500
@@ -62,10 +82,6 @@ Cuando la API procesa una factura, devuelve un objeto detallado con la auditorí
   ]
 }
 
-🚀 Instalación y Ejecución
-Clonar el repositorio: git clone [url-tu-repo]
-Instalar dependencias: npm install
-Ejecutar en modo desarrollo: npx tsx src/app.ts
 
 🧪 Testing Automatizado
 El proyecto cuenta con una suite de pruebas unitarias para validar la lógica contable y el comportamiento del motor bajo diversos escenarios.
