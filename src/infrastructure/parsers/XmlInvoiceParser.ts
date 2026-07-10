@@ -1,82 +1,55 @@
-// src/infrastructure/parsers/XmlInvoiceParser.ts
-import { XMLParser } from 'fast-xml-parser';
-import { Invoice, InvoiceItem, Provider } from '../../domain/entities/Invoice';
+export interface DatosFacturaParaImpuestos {
+    subtotal: number;
+    valorIvaCobrado: number;
+    responsabilidadProveedor: string;
+    nit: string;
+    razonSocial: string;
+}
 
 export class XmlInvoiceParser {
-    private parser: XMLParser;
+    
+    public extraerDatosFiscales(xmlParseado: any): DatosFacturaParaImpuestos {
+        const tipoDocumento = Object.keys(xmlParseado).find(key => 
+            key === 'Invoice' || key === 'CreditNote' || key === 'DebitNote'
+        ) || Object.keys(xmlParseado)[0];
 
-    constructor() {
-        // Configuramos el parser para que ignore los namespaces molestos como 'cac:' o 'cbc:'
-        this.parser = new XMLParser({
-            ignoreAttributes: false,
-            removeNSPrefix: true, // ¡Este es el truco de magia! Convierte <cbc:ID> en <ID>
-        });
-    }
+        const documento = xmlParseado[tipoDocumento];
 
-    public parse(xmlContent: string): Invoice {
-        const jsonObj = this.parser.parse(xmlContent);
+        if (!documento) {
+            throw new Error("Estructura de documento XML no reconocida o vacía.");
+        }
         
-        // La etiqueta principal puede ser Invoice o AttachedDocument dependiendo si viene en contenedor
-        const invoiceRoot = jsonObj.Invoice || jsonObj.AttachedDocument?.Attachment?.ExternalReference?.Description?.Invoice;
-        
-        if (!invoiceRoot) {
-            throw new Error('Estructura XML no válida o no se encontró la etiqueta <Invoice>.');
+        // 1. Extraer Subtotal
+        const subtotal = Number(documento.LegalMonetaryTotal?.[0]?.LineExtensionAmount?.[0] || 0);
+
+        // 2. Extraer IVA
+        let valorIvaCobrado = 0;
+        const agrupacionesImpuestos = documento.TaxTotal || [];
+        for (const impuesto of agrupacionesImpuestos) {
+            const codigoImpuesto = impuesto.TaxSubtotal?.[0]?.TaxCategory?.[0]?.TaxScheme?.[0]?.ID?.[0];
+            if (codigoImpuesto === '01') { 
+                valorIvaCobrado = Number(impuesto.TaxAmount?.[0] || 0);
+                break; 
+            }
         }
 
-        // 1. Extraer datos del Proveedor (AccountingSupplierParty)
-        const supplierParty = invoiceRoot.AccountingSupplierParty?.Party;
-        const taxScheme = supplierParty?.PartyTaxScheme;
+        // 3. Extraer Datos del Proveedor (NIT, Razón Social y Responsabilidad)
+        const proveedorNode = documento.AccountingSupplierParty?.[0]?.Party?.[0];
+        const esquemaTributarioProveedor = proveedorNode?.PartyTaxScheme?.[0];
         
-        const provider: Provider = {
-            nit: taxScheme?.CompanyID?.['#text'] || taxScheme?.CompanyID?.toString() || 'NIT_NO_ENCONTRADO',
-            razonSocial: taxScheme?.RegistrationName || 'RAZON_SOCIAL_NO_ENCONTRADA',
-            regimen: taxScheme?.TaxLevelCode === 'O-47' ? 'GranContribuyente' : 'Comun' // Ejemplo básico de mapeo
-        };
+        const nit = String(esquemaTributarioProveedor?.CompanyID?.[0] || 'Desconocido');
+        
+        // Buscamos el nombre de la empresa en las dos etiquetas más comunes de la DIAN
+        const razonSocial = String(esquemaTributarioProveedor?.RegistrationName?.[0] || proveedorNode?.PartyName?.[0]?.Name?.[0] || 'Desconocido');
+        
+        const responsabilidadProveedor = String(esquemaTributarioProveedor?.TaxLevelCode?.[0] || 'R-99-PN');
 
-        // 2. Extraer Totales (LegalMonetaryTotal)
-        const monetaryTotal = invoiceRoot.LegalMonetaryTotal;
-        const subtotal = parseFloat(monetaryTotal?.LineExtensionAmount?.['#text'] || monetaryTotal?.LineExtensionAmount || '0');
-        const totalIva = parseFloat(monetaryTotal?.TaxInclusiveAmount?.['#text'] || monetaryTotal?.TaxInclusiveAmount || '0') - subtotal;
-        const totalFactura = parseFloat(monetaryTotal?.PayableAmount?.['#text'] || monetaryTotal?.PayableAmount || '0');
-
-        // 3. Extraer Líneas de Detalle (InvoiceLine)
-        // A veces es un array (muchos items), a veces un objeto (un solo item)
-        let rawLines = invoiceRoot.InvoiceLine;
-        if (!rawLines) rawLines = [];
-        if (!Array.isArray(rawLines)) rawLines = [rawLines];
-
-        const items: InvoiceItem[] = rawLines.map((line: any) => {
-            const descripcion = line.Item?.Description || 'Sin descripción';
-            const valorBase = parseFloat(line.LineExtensionAmount?.['#text'] || line.LineExtensionAmount || '0');
-            
-            // Heurística simple para determinar el concepto basado en el texto del item
-            let tipoConcepto: 'Compras' | 'Servicios' | 'Honorarios' | 'Arrendamientos' = 'Compras';
-            const textLower = descripcion.toString().toLowerCase();
-            if (textLower.includes('servicio') || textLower.includes('mantenimiento') || textLower.includes('parqueadero')) {
-                tipoConcepto = 'Servicios';
-            } else if (textLower.includes('honorario') || textLower.includes('asesoría')) {
-                tipoConcepto = 'Honorarios';
-            } else if (textLower.includes('arriendo') || textLower.includes('alquiler')) {
-                tipoConcepto = 'Arrendamientos';
-            }
-
-            return {
-                id: line.ID?.toString() || '0',
-                descripcion,
-                tipoConcepto,
-                valorBase,
-                valorIva: 0 // Simplificado para este ejemplo
-            };
-        });
-
-        // Retornamos nuestra entidad de dominio pura y limpia
-        return new Invoice(
-            invoiceRoot.ID?.toString() || 'SN',
-            provider,
-            items,
+        return {
             subtotal,
-            totalIva,
-            totalFactura
-        );
+            valorIvaCobrado,
+            responsabilidadProveedor,
+            nit,
+            razonSocial
+        };
     }
 }

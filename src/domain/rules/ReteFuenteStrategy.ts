@@ -1,29 +1,22 @@
-// src/domain/rules/ReteFuenteStrategy.ts
-import { WithholdingStrategy, WithholdingResult } from './WithholdingStrategy.js';
-import { Invoice } from '../entities/Invoice.js';
+import { WithholdingStrategy, DatosFactura, ResultadoRetencion } from './WithholdingStrategy';
 
 export class ReteFuenteStrategy implements WithholdingStrategy {
-    calculate(invoice: Invoice, config: any): WithholdingResult {
-        // Calculamos el tope real basado en la UVT del config
-        const topeCompras = config.VALOR_UVT_2026 * config.TOPES.RETEFUENTE_COMPRAS_UVT;
-        
-        if (invoice.subtotal >= topeCompras) {
-            const valorRetenido = Math.round(invoice.subtotal * 0.025);
+    private readonly TARIFA = 0.025;
+    private readonly BASE_MINIMA = 100000;
+
+    public calcular(datos: DatosFactura): ResultadoRetencion {
+        if (datos.subtotal < this.BASE_MINIMA) {
             return {
-                impuesto: 'ReteFuente',
-                aplicado: true,
-                valorRetenido: valorRetenido,
-                baseCalculada: invoice.subtotal,
-                justificacion: `[Compras] Retención del 2.5% sobre base $${invoice.subtotal} (Supera tope de $${topeCompras}).`
+                impuesto: "ReteFuente",
+                valorAplicado: 0,
+                justificacion: `No aplica: Subtotal ($${datos.subtotal}) menor a base mínima ($${this.BASE_MINIMA}).`
             };
         }
 
         return {
-            impuesto: 'ReteFuente',
-            aplicado: false,
-            valorRetenido: 0,
-            baseCalculada: invoice.subtotal,
-            justificacion: `[Compras] Omitido sobre base $${invoice.subtotal} (No supera tope de $${topeCompras}).`
+            impuesto: "ReteFuente",
+            valorAplicado: datos.subtotal * this.TARIFA,
+            justificacion: `Aplica 2.5% sobre subtotal ($${datos.subtotal}).`
         };
     }
 }

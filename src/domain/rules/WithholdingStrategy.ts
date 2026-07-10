@@ -1,14 +1,20 @@
-// src/domain/rules/WithholdingStrategy.ts
-import { Invoice } from '../entities/Invoice.js';
+// Interfaz con los datos que nos entrega el parser
+export interface DatosFactura {
+    subtotal: number;
+    valorIvaCobrado: number;
+    responsabilidadProveedor: string;
+    nit: string;
+    razonSocial: string;
+}
 
-export interface WithholdingResult {
-    impuesto: 'ReteFuente' | 'ReteIVA' | 'ReteICA';
-    aplicado: boolean;
-    valorRetenido: number;
-    baseCalculada: number;
+// Interfaz para la respuesta que exige Cifrato
+export interface ResultadoRetencion {
+    impuesto: string;
+    valorAplicado: number;
     justificacion: string;
 }
 
+// El contrato que TODAS las estrategias deben cumplir
 export interface WithholdingStrategy {
-    calculate(invoice: Invoice, config: { valorUvt: number }): WithholdingResult;
+    calcular(datosFactura: DatosFactura): ResultadoRetencion;
 }
