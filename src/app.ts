@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import multer from 'multer';
 import { parseStringPromise, processors } from 'xml2js';
 import { XmlInvoiceParser } from './infrastructure/parsers/XmlInvoiceParser';
@@ -8,7 +9,11 @@ import { ReteFuenteStrategy } from './domain/rules/ReteFuenteStrategy';
 import { ReteIcaStrategy } from './domain/rules/ReteIcaStrategy';
 
 const app = express();
-const port = 3000;
+// Ajuste para despliegue: Usar el puerto de la nube o el 3000 localmente
+const port = process.env.PORT || 3000; 
+
+// --- CONFIGURACIÓN CORS (Permite que el frontend en Vercel se conecte) ---
+app.use(cors());
 
 // Configuración de Multer para manejar la carga de archivos en memoria
 const storage = multer.memoryStorage();
@@ -84,5 +89,5 @@ app.post('/api/v1/invoices/calculate', upload.array('facturas'), async (req, res
 });
 
 app.listen(port, () => {
-    console.log(`🚀 Servidor corriendo con Arquitectura Limpia en http://localhost:${port}`);
+    console.log(`🚀 Servidor corriendo con Arquitectura Limpia en el puerto ${port}`);
 });
